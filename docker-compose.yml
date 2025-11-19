@@ -9,14 +9,42 @@ services:
       - "3000:3000"
     volumes:
       - ./front:/app
-    command: npm run dev
+      - /app/node_modules 
+      - /app/.next 
 
+    command: npm run dev 
+    
   backend:
-    build:
-      context: ./back
-      dockerfile: Dockerfile
+      build:
+        context: ./back
+        dockerfile: Dockerfile
+      ports:
+        - "8000:8000"
+      volumes:
+        - ./back:/app
+      environment:
+        OLLAMA_URL: http://ollama:11434/api/generate
+      command: uvicorn main:app --host 0.0.0.0 --port 8000
+  
+  ollama:
+    image: ollama/ollama
+    # To use NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    
     ports:
-      - "8000:8000"
+      - "11434:11434"
+    
     volumes:
-      - ./back:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+      - ollama_data:/root/.ollama
+
+    command: >
+      sh -c "ollama pull gemma3:1b && ollama serve"
+    
+volumes:
+  ollama_data:

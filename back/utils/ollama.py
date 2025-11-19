@@ -1,9 +1,7 @@
-# ollama.py
-
 import requests
 from requests.exceptions import RequestException, Timeout
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = "gemma3:1b"
 DEFAULT_TIMEOUT = 30  # note: seconds
 

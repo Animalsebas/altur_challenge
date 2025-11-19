@@ -52,7 +52,7 @@ def analyze_transcription(transcription: str):
         "You are an expert call center analyst. Your task is to read the provided summary report and generate status tags for lead management. "
         "The tags must indicate the immediate status or outcome of the call. "
         "Your output MUST be a **single, valid JSON object** with exactly one top-level key: 'tags_list'. "
-        "The value of 'tags_list' must be a JSON list of one or more relevant, precise tags. "
+        "The value of 'tags_list' must be a JSON list of maximum 3 relevant, precise tags. "
         "**CRITICAL EXAMPLES:** 'Client wants to buy', 'Wrong number', 'Needs follow-up', 'Voicemail', 'Qualified Lead', 'Pricing Inquiry', 'Demo Scheduled', 'Closed Lost'. "
         "**DO NOT** include any surrounding Markdown fences (```json) or commentary. **BEGIN** your response immediately with the opening curly brace '{'.\n\n"
         

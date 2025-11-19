@@ -5,7 +5,7 @@ import { Logo } from '@/components/icons'
 
 export const CallAnalysisLoader = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 transition-colors duration-500 p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-black transition-colors duration-500 p-8">
       
       <div className="relative w-24 h-24 mb-6">
         <Logo 

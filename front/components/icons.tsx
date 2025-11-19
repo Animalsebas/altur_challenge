@@ -12,7 +12,17 @@ export const Logo: React.FC<IconSvgProps> = ({
 }) => {
   const { theme } = useTheme(); // Get the current theme
 
-  const fillColor = theme === "dark" ? "#FFFFFF" : "#000000"; // White for dark mode, black for light mode
+  const DEFAULT_FILL_COLOR = "#000000"; 
+  const [fillColor, setFillColor] = React.useState(DEFAULT_FILL_COLOR);
+
+
+  React.useEffect(() => {
+    const clientColor = theme === "dark" ? "#FFFFFF" : "#000000";
+    // This triggers a re-render *after* hydration.
+    if (clientColor !== fillColor) {
+        setFillColor(clientColor);
+    }
+  }, [theme, fillColor]);
 
   return (
     <svg

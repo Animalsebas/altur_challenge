@@ -105,6 +105,10 @@ export default function App() {
   const [historyRows, setHistoryRows] = useState<
     { id: number; file_name: string; uploaded_at: string; tags: string[] }[] | null
   >(null);
+  const [allAvailableTags, setAllAvailableTags] = useState<string[]>([]);
+  const [activeFilterTags, setActiveFilterTags] = useState<string[]>([]);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<any | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -167,6 +171,7 @@ export default function App() {
       if (!res.ok) throw new Error("Failed to load history");
       const data = await res.json();
       setHistoryRows(data);
+      setAllAvailableTags(extractUniqueTags(data));
     } catch (e) {
       console.error("Error fetching history:", e);
       setHistoryRows([]);
@@ -176,10 +181,55 @@ export default function App() {
     }
   };
 
-
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  const extractUniqueTags = useCallback((rows: typeof historyRows) => {
+    if (!rows) return [];
+    const tags = new Set<string>();
+    rows.forEach(row => {
+      if (Array.isArray(row.tags)) {
+        row.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    return Array.from(tags).sort();
+  }, []);
+
+  const toggleFilterTag = (tag: string) => {
+    setActiveFilterTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const resetFilters = () => {
+    setActiveFilterTags([]);
+    setSortDirection("desc");
+  };
+
+  const filteredAndSortedRows = React.useMemo(() => {
+    if (!historyRows) return [];
+
+    let rows = historyRows;
+    if (activeFilterTags.length > 0) {
+      rows = historyRows.filter(row => 
+        row.tags.some(tag => activeFilterTags.includes(tag))
+      );
+    }
+
+    return rows.slice().sort((a, b) => {
+      const dateA = new Date(a.uploaded_at).getTime();
+      const dateB = new Date(b.uploaded_at).getTime();
+
+      if (sortDirection === "asc") {
+        return dateA - dateB; // Ascending
+      } else {
+        return dateB - dateA; // Descending
+      }
+    });
+  }, [historyRows, activeFilterTags, sortDirection]);
 
   const handleRowClick = async (id: number) => {
     setDetailsLoading(true);
@@ -232,15 +282,74 @@ export default function App() {
       
 
       <div className="w-full max-w-4xl mt-8">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
           <h2 className="text-2xl font-semibold">History</h2>
-          <Button
-            onPress={fetchHistory}
-            className="px-3 py-1 rounded-md text-sm"
-            disabled={historyLoading}
-          >
-            {historyLoading ? "Refreshing..." : "Refresh"}
-          </Button>
+
+          <div className="flex items-center gap-4">
+              <div className="relative">
+                  <Button
+                      onPress={() => setIsFilterDropdownOpen(prev => !prev)}
+                      className="px-3 py-1 rounded-md text-sm whitespace-nowrap border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                  >
+                      Filter Tags ({activeFilterTags.length})
+                  </Button>
+                  
+                  {isFilterDropdownOpen && (
+                      <div className="absolute z-10 top-full mt-2 right-0 w-64 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl bg-white dark:bg-gray-900 max-h-60 overflow-y-auto">
+                          <p className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">Select Tags</p>
+                          
+                          {allAvailableTags.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                  {allAvailableTags.map(tag => (
+                                      <span
+                                          key={tag}
+                                          onClick={() => toggleFilterTag(tag)}
+                                          className={`
+                                              text-xs px-3 py-1 rounded-full cursor-pointer transition-colors duration-150
+                                              ${
+                                                  activeFilterTags.includes(tag) 
+                                                  ? "bg-blue-600 text-white dark:bg-blue-400 dark:text-gray-900 font-bold"
+                                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                                              }
+                                          `}
+                                      >
+                                          {tag}
+                                      </span>
+                                  ))}
+                              </div>
+                          ) : (
+                              <p className="text-xs text-gray-500">No tags available.</p>
+                          )}
+                      </div>
+                  )}
+              </div>
+              
+              {(activeFilterTags.length > 0 || sortDirection !== "desc") && (
+                  <Button
+                      onPress={resetFilters}
+                      className="px-3 py-1 rounded-md text-sm bg-red-500 hover:bg-red-600 text-white whitespace-nowrap"
+                      aria-label="Reset all filters"
+                  >
+                      Reset Filters
+                  </Button>
+              )}
+
+              <Button
+                  onPress={() => setSortDirection(prev => (prev === "asc" ? "desc" : "asc"))}
+                  className="px-3 py-1 rounded-md text-sm whitespace-nowrap"
+                  disabled={historyLoading}
+              >
+                  Uploaded At: {sortDirection === "desc" ? "Newest ↑" : "Oldest ↓"}
+              </Button>
+
+              <Button
+                  onPress={fetchHistory}
+                  className="px-3 py-1 rounded-md text-sm"
+                  disabled={historyLoading}
+              >
+                  {historyLoading ? "Refreshing..." : "Refresh"}
+              </Button>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded shadow">
@@ -249,19 +358,23 @@ export default function App() {
               <tr>
                 <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">ID</th>
                 <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Filename</th>
-                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Uploaded At</th>
+                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold cursor-pointer"
+                    onClick={() => setSortDirection(prev => (prev === "asc" ? "desc" : "asc"))}>
+                  Uploaded At
+                  {sortDirection === "desc" ? " ↓" : " ↑"}
+                </th>
                 <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Tags</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
-              {historyRows && historyRows.length > 0 ? (
-                historyRows.map((r) => (
+              {filteredAndSortedRows.length > 0 ? (
+                filteredAndSortedRows.map((r) => (
                   <tr
                     key={r.id}
                     onClick={() => handleRowClick(r.id)}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.id}</td>                   
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.id}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{r.file_name}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                       {new Date(r.uploaded_at).toLocaleString()}
@@ -290,7 +403,12 @@ export default function App() {
                     colSpan={4} 
                     className="px-4 py-6 text-center text-sm text-black dark:text-white font-bold"
                   >
-                    {historyLoading ? "Loading..." : "No history found."}
+                    {historyLoading 
+                      ? "Loading..." 
+                      : activeFilterTags.length > 0
+                        ? "No results match your selected filters." 
+                        : "No history found."
+                    }
                   </td>
                 </tr>
               )}
