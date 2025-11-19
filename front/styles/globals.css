@@ -1,3 +1,62 @@
 @import "tailwindcss";
 
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-logo {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* Keyframes for the 'typing' effect */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* Keyframes for the fading border/caret of the typing effect */
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #6366f1; /* Tailwind indigo-500 */ }
+}
+
+/* Keyframes for a simple fade-in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Add the custom utilities to Tailwind (if not already done via tailwind.config.js) */
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse-logo 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-typing {
+  /* Adjust steps based on the number of characters in the text (e.g., "Analyzing call transcription..." is about 30 chars) */
+  animation: 
+    typing 4s steps(30, end),
+    blink-caret .75s step-end infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-in forwards;
+}
+
 @config "../tailwind.config.js"
+

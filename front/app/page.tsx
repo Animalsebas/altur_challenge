@@ -1,8 +1,24 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Upload } from "lucide-react";
-import ReactMarkdown from "react-markdown"; // Import react-markdown
+import ReactMarkdown from "react-markdown";
+import { CallAnalysisLoader } from '@/components/loader';
+import {Button} from "@heroui/button";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/modal";
+
+type Toast = {
+  id: number;
+  message: string;
+  type?: "success" | "error" | "info";
+};
 
 type DragAndDropFileUploaderProps = {
   onFileSelected: (file: File) => void;
@@ -57,14 +73,14 @@ const DragAndDropFileUploader: React.FC<DragAndDropFileUploaderProps> = ({ onFil
           ${
             isDragging
               ? "border-blue-500 bg-blue-50 text-blue-700"
-              : "border-gray-300 bg-white hover:border-blue-400 hover:bg-gray-50"
+              : "border-gray-300 hover:border-blue-400"
           }
         `}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
-        <Upload className="w-10 h-10 mb-3" />
+        <Upload className="w-10 h-10 mb-3 text-blue-500" stroke="currentColor" />
         <p className="text-lg font-semibold">
           {isDragging ? "Drop your file here" : "Drag & drop file or click to upload"}
         </p>
@@ -82,27 +98,40 @@ const DragAndDropFileUploader: React.FC<DragAndDropFileUploaderProps> = ({ onFil
   );
 };
 
-export default function Home() {
+export default function App() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [transcription, setTranscription] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [tags, setTags] = useState<string[] | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [historyRows, setHistoryRows] = useState<
+    { id: number; file_name: string; uploaded_at: string; tags: string[] }[] | null
+  >(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [selectedDetails, setSelectedDetails] = useState<any | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const {isOpen, onOpen, onOpenChange} = useDisclosure();
+
+
+  const showToast = (message: string, type: Toast["type"] = "info", duration = 4000) => {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    setToasts((s) => [...s, { id, message, type }]);
+    setTimeout(() => setToasts((s) => s.filter((t) => t.id !== id)), duration);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((s) => s.filter((t) => t.id !== id));
+  };
 
   const handleFileSelected = (file: File) => {
     setUploadedFile(file);
-    setTranscription(null);
-    setSummary(null);
-    setTags(null);
   };
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     if (!uploadedFile) {
-      alert("Please upload a file before submitting.");
+      showToast("Please upload a file before submitting.", "error");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsAnalyzing(true);
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
@@ -119,73 +148,242 @@ export default function Home() {
 
       const data = await response.json();
       console.log("Data received from API:", data);
-      setTranscription(data.transcription);
-      setSummary(data.summary);
-      setTags(data.tags_list);
+      showToast("File transcribed and analyzed successfully!", "success");
+      setUploadedFile(null);
+      fetchHistory();
+      handleRowClick(data.id);
     } catch (error) {
       console.error("Error during transcription:", error);
-      alert("An error occurred while transcribing the file.");
+      showToast("An error occurred while transcribing the file.", "error");
     } finally {
-      setIsSubmitting(false);
+      setIsAnalyzing(false);
     }
   };
 
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/history");
+      if (!res.ok) throw new Error("Failed to load history");
+      const data = await res.json();
+      setHistoryRows(data);
+    } catch (e) {
+      console.error("Error fetching history:", e);
+      setHistoryRows([]);
+      showToast("Failed to load history.", "error");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const handleRowClick = async (id: number) => {
+    setDetailsLoading(true);
+    try {
+      const res = await fetch(`/api/history/${id}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch details");
+      }
+      const data = await res.json();
+      setSelectedDetails(data);
+      onOpen();
+    } catch (e) {
+      console.error("Error fetching details:", e);
+      showToast("Failed to load details.", "error");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  if (isAnalyzing) {
+    return <CallAnalysisLoader />;
+  }
+
   return (
     <section className="flex flex-col items-center justify-center gap-6 py-8 md:py-10">
-      <h1 className="text-3xl font-bold">Altur: Sales Call Analyzer</h1>
-      <p className="text-lg text-center max-w-2xl">
+      <h1 className="text-4xl font-bold">Altur: Sales Call Analyzer</h1>
+      <p className="text-2xl text-center font-bold">
         Upload a call
       </p>
 
       <DragAndDropFileUploader onFileSelected={handleFileSelected} />
 
       {uploadedFile && (
-        <div className="mt-4 p-4 border border-green-400 bg-green-50 rounded-lg text-green-800">
-          <p className="font-semibold">File ready for analysis:</p>
-          <p className="text-sm">Name: {uploadedFile.name}</p>
-          <p className="text-sm">Size: {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-        </div>
+        <>
+          <div className="mt-4 p-4 border border-green-400 bg-green-50 rounded-lg text-green-800">
+            <p className="font-semibold">File {uploadedFile.name} is ready for analysis</p>
+          </div>
+          <Button
+          onPress={handleSubmit}
+          disabled={isAnalyzing}
+          className={`mt-4 px-6 py-2 rounded-lg text-white ${
+            isAnalyzing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+          }`}
+        >
+          {isAnalyzing ? "Analyzing..." : "Start Analysis"}
+        </Button>
+      </>
       )}
+      
+      
 
-      <button
-        onClick={handleSubmit}
-        disabled={isSubmitting}
-        className={`mt-4 px-6 py-2 rounded-lg text-white ${
-          isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-        }`}
-      >
-        {isSubmitting ? "Analyzing..." : "Submit"}
-      </button>
-
-      {transcription && (
-        <div className="mt-4 p-4 border border-blue-400 bg-blue-50 rounded-lg text-blue-800">
-          <p className="font-semibold">Transcription:</p>
-          <p className="text-sm">{transcription}</p>
+      <div className="w-full max-w-4xl mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-semibold">History</h2>
+          <Button
+            onPress={fetchHistory}
+            className="px-3 py-1 rounded-md text-sm"
+            disabled={historyLoading}
+          >
+            {historyLoading ? "Refreshing..." : "Refresh"}
+          </Button>
         </div>
-      )}
 
-      {summary && (
-        <div className="mt-4 p-4 border border-blue-400 bg-blue-50 rounded-lg text-blue-800">
-          <p className="font-semibold">Summary:</p>
-          <ReactMarkdown >{summary}</ReactMarkdown>
+        <div className="overflow-x-auto rounded shadow">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">ID</th>
+                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Filename</th>
+                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Uploaded At</th>
+                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Tags</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
+              {historyRows && historyRows.length > 0 ? (
+                historyRows.map((r) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => handleRowClick(r.id)}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                  >
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.id}</td>                   
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{r.file_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(r.uploaded_at).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {Array.isArray(r.tags) && r.tags.length > 0 ? (
+                          r.tags.map((t: string, i: number) => (
+                            <span 
+                              key={i} 
+                              className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full"
+                            >
+                              {t}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td 
+                    colSpan={4} 
+                    className="px-4 py-6 text-center text-sm text-black dark:text-white font-bold"
+                  >
+                    {historyLoading ? "Loading..." : "No history found."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {tags && (
-        <div className="mt-4 p-4 border border-blue-400 bg-blue-50 rounded-lg text-blue-800 w-full max-w-lg">
-          <p className="font-semibold">Tags:</p>
-          <ul className="mt-2 flex flex-wrap gap-2">
-            {tags.map((tag, index) => (
-              <li
-                key={index}
-                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-              >
-                {tag}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl">
+        <ModalContent>
+          {(onClose) => (
+            <>
+            <ModalHeader className="flex flex-col gap-1">Analysis Details</ModalHeader>
+            <ModalBody>
+            <div className="p-6 max-h-[70vh] overflow-y-auto space-y-4">
+              {detailsLoading ? (
+                <p>Loading details…</p>
+              ) : selectedDetails ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-bold">ID</p>
+                      <p className="font-medium">{selectedDetails.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Filename</p>
+                      <p className="font-medium">{selectedDetails.file_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Uploaded At</p>
+                      <p className="font-medium">
+                        {new Date(selectedDetails.uploaded_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Language</p>
+                      <p className="font-medium">{selectedDetails.language ?? "—"}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold">Tags</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {Array.isArray(selectedDetails.tags) && selectedDetails.tags.length > 0 ? (
+                        selectedDetails.tags.map((t: string, i: number) => (
+                          <span key={i} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                            {t}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold">Summary</p>
+                    <div className="mt-2 prose max-w-none">
+                      <ReactMarkdown>{selectedDetails.summary ?? ""}</ReactMarkdown>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold">Full Transcript</p>
+                      <pre 
+                        className="whitespace-pre-wrap text-sm border border-gray-300 dark:border-gray-700 p-3 rounded mt-2 max-h-60 overflow-y-auto">                      
+                      {selectedDetails.full_transcript ?? ""}
+                    </pre>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                    <div>
+                      <p className="text-sm font-bold">Transcribe time (s)</p>
+                      <p>{selectedDetails.transcribe_time ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Analysis time (s)</p>
+                      <p>{selectedDetails.analysis_time ?? "—"}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-lg font-bold">No details available.</p>
+              )}
+            </div>
+            </ModalBody>
+            <ModalFooter>
+            </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+          
     </section>
   );
 }

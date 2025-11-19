@@ -55,7 +55,7 @@ export default function RootLayout({
                 title="heroui.com homepage"
               >
                 <span className="text-default-600">Made by</span>
-                <p className="text-black">Sebastián HC</p>
+                <p className="text-primary">Sebastián HC</p>
               </Link>
             </footer>
           </div>

@@ -25,6 +25,7 @@ def insert_analysis_record(conn, file_name, transcription, summary, tags_json, l
         (file_name, transcription, summary, tags_json, language, uploaded_at, processed_at, transcribe_time, analysis_time)
     )
     conn.commit()
+    return cursor.lastrowid
 
 
 @router.post("/analyze")
@@ -63,17 +64,18 @@ async def analyze_audio(file: UploadFile):
         def db_work():
             conn = get_db_connection()
             try:
-                insert_analysis_record(conn, file.filename, transcription_text, summary, tags_json, language, uploaded_at, processed_at, transcribe_time, analysis_time)
+                return insert_analysis_record(conn, file.filename, transcription_text, summary, tags_json, language, uploaded_at, processed_at, transcribe_time, analysis_time)
             finally:
                 conn.close()
         try:
-            await asyncio.to_thread(db_work)
+            inserted_id = await asyncio.to_thread(db_work)
         except IntegrityError as e:
             logger.exception("DB IntegrityError")
             raise HTTPException(status_code=409, detail="File already processed")
 
         # Return results
         return {
+            "id": inserted_id,
             "file_name": file.filename,
             "language": language,
             "transcription": transcription_text,
