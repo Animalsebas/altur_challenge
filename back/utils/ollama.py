@@ -1,5 +1,6 @@
 import requests
 from requests.exceptions import RequestException, Timeout
+import os
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = "gemma3:1b"
