@@ -9,10 +9,10 @@ def initialize_db():
     """
     conn = None
     try:
-        conn = sqlite3.connect(DATABASE_FILE)
+        conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         
-        print(f"Database connection successful. File: {os.path.abspath(DATABASE_FILE)}")
+        print(f"Database connection successful. File: {os.path.abspath(DB_NAME)}")
 
         create_table_query = """
         CREATE TABLE IF NOT EXISTS call_analyses (
