@@ -1,44 +1,50 @@
 import sqlite3
-import os
+from pathlib import Path
 
-DB_NAME = "call_analyzer.db"
+DB_NAME = Path(__file__).resolve().parent / "call_analyzer.db"
+
+def get_db_connection():
+    """
+    Returns a connection to the SQLite database.
+    """
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row  # Note for self: Enables dictionary-like access to rows
+    return conn
 
 def initialize_db():
     """
     Initializes the SQLite database and creates the 'call_analyses' table.
+    Safe to call multiple times.
     """
     conn = None
     try:
-        conn = sqlite3.connect(DB_NAME)
+        conn = get_db_connection()
         cursor = conn.cursor()
-        
-        print(f"Database connection successful. File: {os.path.abspath(DB_NAME)}")
 
         create_table_query = """
         CREATE TABLE IF NOT EXISTS call_analyses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_name TEXT NOT NULL UNIQUE,
+            file_name TEXT NOT NULL,
             full_transcript TEXT,
             summary TEXT,
             tags TEXT,
-            sentiment TEXT,
-            language TEXT NOT NULL,
-            uploaded_at TIMESTAMP,
+            language TEXT,
+            transcribe_time REAL,
+            analysis_time REAL,
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """
-        
         cursor.execute(create_table_query)
         conn.commit()
-        print("Table 'call_analyses' created or already exists.")
-        
+        print(f"Database initialized at: {DB_NAME}")
     except sqlite3.Error as e:
-        print(f"An error occurred during database initialization: {e}")
-        
+        print(f"Database initialization error: {e}")
+        raise
     finally:
         if conn:
             conn.close()
 
 if __name__ == "__main__":
     initialize_db()
-    print("\nInitialization finished.")
+    print("DB initialization complete.")

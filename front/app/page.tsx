@@ -154,7 +154,7 @@ export default function Home() {
           isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
         }`}
       >
-        {isSubmitting ? "Submitting..." : "Submit"}
+        {isSubmitting ? "Analyzing..." : "Submit"}
       </button>
 
       {transcription && (
