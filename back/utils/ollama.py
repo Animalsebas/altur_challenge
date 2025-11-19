@@ -4,7 +4,7 @@ import os
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = "gemma3:1b"
-DEFAULT_TIMEOUT = 30  # note: seconds
+DEFAULT_TIMEOUT = 120  # note: seconds
 
 def ollama_call(prompt: str, timeout: int = DEFAULT_TIMEOUT) -> str:
     """

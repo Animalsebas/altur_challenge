@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
     // Forward the request to the FastAPI backend
-    const response = await fetch("http://localhost:8000/api/analyze", {
+    const response = await fetch(`${BACKEND_URL}/api/analyze`, {
       method: "POST",
       body: formData,
     });

@@ -11,7 +11,8 @@ services:
       - ./front:/app
       - /app/node_modules 
       - /app/.next 
-
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://backend:8000
     command: npm run dev 
     
   backend:
@@ -25,26 +26,31 @@ services:
       environment:
         OLLAMA_URL: http://ollama:11434/api/generate
       command: uvicorn main:app --host 0.0.0.0 --port 8000
+      depends_on:
+        ollama:
+          condition: service_healthy
   
   ollama:
     image: ollama/ollama
-    # To use NVIDIA GPU:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    
     ports:
       - "11434:11434"
-    
     volumes:
       - ollama_data:/root/.ollama
+      - ./Modelfile:/Modelfile
+      - ./ollama_entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
 
-    command: >
-      sh -c "ollama pull gemma3:1b && ollama serve"
+    healthcheck:
+      test: ["CMD", "ollama", "ps"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+
+
+
+
+
     
 volumes:
   ollama_data:
