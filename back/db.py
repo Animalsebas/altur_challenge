@@ -31,6 +31,7 @@ def initialize_db():
             language TEXT,
             transcribe_time REAL,
             analysis_time REAL,
+            processed_where TEXT,
             uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

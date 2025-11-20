@@ -5,6 +5,9 @@ import os
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = "gemma3:1b"
 DEFAULT_TIMEOUT = 120  # note: seconds
+_total_cpus = os.cpu_count() or 1
+_SAFETY_RESERVE = 1
+CPU_THREADS = max(1, _total_cpus - _SAFETY_RESERVE)
 
 def ollama_call(prompt: str, timeout: int = DEFAULT_TIMEOUT) -> str:
     """
@@ -16,7 +19,11 @@ def ollama_call(prompt: str, timeout: int = DEFAULT_TIMEOUT) -> str:
         "prompt": prompt,
         "stream": False,  
         "options": {
-            "temperature": 0.3
+            "temperature": 0.3,
+            "num_ctx": 16384,
+            "num_batch": 2,
+            "num_predict": 512,
+            "num_thread": CPU_THREADS,
         }
     }
 

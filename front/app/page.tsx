@@ -112,6 +112,7 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<any | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<"local" | "remote">("remote");
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
 
 
@@ -129,7 +130,7 @@ export default function App() {
     setUploadedFile(file);
   };
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!uploadedFile) {
       showToast("Please upload a file before submitting.", "error");
       return;
@@ -139,6 +140,7 @@ export default function App() {
 
     const formData = new FormData();
     formData.append("file", uploadedFile);
+    formData.append("analysis_mode", analysisMode);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -265,17 +267,55 @@ export default function App() {
       {uploadedFile && (
         <>
           <div className="mt-4 p-4 border border-green-400 bg-green-50 rounded-lg text-green-800">
-            <p className="font-semibold">File {uploadedFile.name} is ready for analysis</p>
+            <p className="font-semibold text-center">File {uploadedFile.name} is ready for analysis</p>
+            <p className="text-center text-xl mt-2">Select a processing option</p>
+
+            <div className="mt-3 flex items-center gap-3">
+
+              <label
+                className={`flex items-center gap-2 px-3 py-1 rounded-md cursor-pointer transition ${
+                  analysisMode === "remote" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="analysisMode"
+                  value="remote"
+                  checked={analysisMode === "remote"}
+                  onChange={() => setAnalysisMode("remote")}
+                  className="hidden"
+                />
+                <span className="text-lg font-medium">OpenAI (remote)</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-2 px-3 py-1 rounded-md cursor-pointer transition ${
+                  analysisMode === "local" ? "bg-blue-600 text-white" : "bg-white text-gray-700 border border-gray-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="analysisMode"
+                  value="local"
+                  checked={analysisMode === "local"}
+                  onChange={() => setAnalysisMode("local")}
+                  className="hidden"
+                />
+                <span className="text-lg font-medium">Local (server)</span>
+              </label>
+
+            </div>
           </div>
+
           <Button
-          onPress={handleSubmit}
-          disabled={isAnalyzing}
-          className={`mt-4 px-6 py-2 rounded-lg text-white ${
-            isAnalyzing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-          }`}
-        >
-          {isAnalyzing ? "Analyzing..." : "Start Analysis"}
-        </Button>
+            onPress={handleSubmit}
+            disabled={isAnalyzing}
+            className={`mt-4 px-6 py-2 rounded-lg text-white ${
+              isAnalyzing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+            }`}
+          >
+            {isAnalyzing ? "Analyzing..." : "Start Analysis"}
+          </Button>
       </>
       )}
       
@@ -352,68 +392,87 @@ export default function App() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded shadow">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">ID</th>
-                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Filename</th>
-                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold cursor-pointer"
-                    onClick={() => setSortDirection(prev => (prev === "asc" ? "desc" : "asc"))}>
-                  Uploaded At
-                  {sortDirection === "desc" ? " ↓" : " ↑"}
-                </th>
-                <th className="px-4 py-2 text-left text-md font-medium text-black dark:text-gray-200 font-bold">Tags</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredAndSortedRows.length > 0 ? (
-                filteredAndSortedRows.map((r) => (
-                  <tr
-                    key={r.id}
-                    onClick={() => handleRowClick(r.id)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+        <div className="rounded shadow overflow-hidden">
+          <div className="max-h-[56vh] overflow-y-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead>
+                <tr>
+                  <th className="sticky top-0 z-10 px-4 py-2 text-left text-md font-medium 
+                                text-black dark:text-gray-200 font-bold
+                                bg-gray-50 dark:bg-gray-800">
+                    ID
+                  </th>
+
+                  <th className="sticky top-0 z-10 px-4 py-2 text-left text-md font-medium 
+                                text-black dark:text-gray-200 font-bold
+                                bg-gray-50 dark:bg-gray-800">
+                    Filename
+                  </th>
+
+                  <th 
+                    className="sticky top-0 z-10 px-4 py-2 text-left text-md font-medium 
+                              text-black dark:text-gray-200 font-bold cursor-pointer
+                              bg-gray-50 dark:bg-gray-800"
+                    onClick={() => setSortDirection(prev => (prev === "asc" ? "desc" : "asc"))}
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{r.file_name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(r.uploaded_at).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        {Array.isArray(r.tags) && r.tags.length > 0 ? (
-                          r.tags.map((t: string, i: number) => (
-                            <span 
-                              key={i} 
-                              className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full"
-                            >
-                              {t}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
-                        )}
-                      </div>
+                    Uploaded At {sortDirection === "desc" ? " ↓" : " ↑"}
+                  </th>
+
+                  <th className="sticky top-0 z-10 px-4 py-2 text-left text-md font-medium 
+                                text-black dark:text-gray-200 font-bold
+                                bg-gray-50 dark:bg-gray-800">
+                    Tags
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
+                {filteredAndSortedRows.length > 0 ? (
+                  filteredAndSortedRows.map((r) => (
+                    <tr
+                      key={r.id}
+                      onClick={() => handleRowClick(r.id)}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                    >
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.id}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{r.file_name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(r.uploaded_at).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          {Array.isArray(r.tags) && r.tags.length > 0 ? (
+                            r.tags.map((t: string, i: number) => (
+                              <span
+                                key={i}
+                                className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full"
+                              >
+                                {t}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-6 text-center text-sm text-black dark:text-white font-bold"
+                    >
+                      {historyLoading
+                        ? "Loading..."
+                        : activeFilterTags.length > 0
+                        ? "No results match your selected filters."
+                        : "No history found."}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td 
-                    colSpan={4} 
-                    className="px-4 py-6 text-center text-sm text-black dark:text-white font-bold"
-                  >
-                    {historyLoading 
-                      ? "Loading..." 
-                      : activeFilterTags.length > 0
-                        ? "No results match your selected filters." 
-                        : "No history found."
-                    }
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -446,6 +505,13 @@ export default function App() {
                     <div>
                       <p className="text-sm font-bold">Language</p>
                       <p className="font-medium">{selectedDetails.language ?? "—"}</p>
+                      <p className="text-xs text-gray-500 mt-1 italic">
+                        Note: language is detected only when processed locally.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Processed</p>
+                      <p className="font-medium">{selectedDetails.processed_where}</p>
                     </div>
                   </div>
 

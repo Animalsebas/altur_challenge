@@ -1,8 +1,11 @@
 from faster_whisper import WhisperModel
 import time
+import os
 
 MODEL_SIZE = "tiny"
-CPU_THREADS = 6
+_total_cpus = os.cpu_count() or 1
+_SAFETY_RESERVE = 1
+CPU_THREADS = max(1, _total_cpus - _SAFETY_RESERVE)
 COMPUTE_TYPE = "int8"
 
 # Load the Whisper model once

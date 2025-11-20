@@ -19,6 +19,8 @@ services:
       build:
         context: ./back
         dockerfile: Dockerfile
+      env_file:
+        - .env
       ports:
         - "8000:8000"
       volumes:
@@ -29,9 +31,10 @@ services:
       depends_on:
         ollama:
           condition: service_healthy
+
   
   ollama:
-    image: ollama/ollama
+    image: alpine/ollama
     ports:
       - "11434:11434"
     volumes:
@@ -42,15 +45,10 @@ services:
 
     healthcheck:
       test: ["CMD", "ollama", "ps"]
-      interval: 10s
+      interval: 20s
       timeout: 5s
       retries: 12
       start_period: 120s
-
-
-
-
-
     
 volumes:
   ollama_data:

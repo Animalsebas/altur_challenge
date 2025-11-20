@@ -7,5 +7,6 @@ class CallAnalysis(BaseModel):
     summary: str
     tags: List[str]
     language: str
+    processed_where: str
     uploaded_at: str
     processed_at: Optional[str] = None

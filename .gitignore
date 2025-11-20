@@ -3,3 +3,7 @@
 /back/utils/__pycache__
 /back/services/__pycache__
 /back/routers/__pycache__
+back/.env
+.env
+back/call_analyzer.db
+back/call_analyzer.db
