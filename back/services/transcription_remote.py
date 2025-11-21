@@ -20,7 +20,6 @@ def transcribe_file_remote(file_path: str):
                 model="gpt-4o-transcribe",
                 response_format="json"
             )
-        print(response)
         transcription = response.text.strip()
         language = "UNKNOWN"  # Note: OpenAI does not currently return detected language
 

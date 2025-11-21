@@ -149,7 +149,8 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to transcribe the file.");
+        showToast("Failed to analyze the file.", "error");
+        throw new Error("Failed to analyze the file.");
       }
 
       const data = await response.json();
@@ -250,6 +251,60 @@ export default function App() {
       setDetailsLoading(false);
     }
   };
+
+  const downloadJSON = (data: any, filename: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRetrieveAll = async () => {
+    try {
+      const res = await fetch("/api/retrieve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tags: activeFilterTags,
+          order: sortDirection
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed retrieving calls");
+
+      const data = await res.json();
+      downloadJSON(data, "retrieved_calls.json");
+    } catch (e) {
+      console.error(e);
+      showToast("Failed to retrieve calls.", "error");
+    }
+  };
+
+  const handleRetrieveSingle = async () => {
+    if (!selectedDetails) return;
+
+    try {
+      const res = await fetch(`/api/retrieve/${selectedDetails.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!res.ok) throw new Error("Failed to retrieve call");
+
+      const data = await res.json();
+      downloadJSON(data, "retrieved_call.json");
+    } catch (e) {
+      console.error(e);
+      showToast("Failed to retrieve call.", "error");
+    }
+  };
+
 
   if (isAnalyzing) {
     return <CallAnalysisLoader />;
@@ -389,6 +444,14 @@ export default function App() {
               >
                   {historyLoading ? "Refreshing..." : "Refresh"}
               </Button>
+
+              <Button
+                onPress={handleRetrieveAll}
+                className="px-3 py-1 rounded-md text-sm bg-green-600 hover:bg-green-700 text-white"
+              >
+                Download
+              </Button>
+
           </div>
         </div>
 
@@ -562,6 +625,16 @@ export default function App() {
             </div>
             </ModalBody>
             <ModalFooter>
+              <Button
+                className="bg-green-600 text-white hover:bg-green-700"
+                onPress={handleRetrieveSingle}
+              >
+                Download
+              </Button>
+
+              <Button color="danger" variant="light" onPress={onClose}>
+                Close
+              </Button>
             </ModalFooter>
             </>
           )}
