@@ -5,7 +5,7 @@ It combines a modern Next.js frontend, a FastAPI backend, and support for both l
 
 ---------------------------------------------------------------------
 
-## Technologies Used
+## Technologies Used and Design Decisions
 
 ### Frontend
 - Next.js 14 (App Router)
@@ -13,6 +13,23 @@ It combines a modern Next.js frontend, a FastAPI backend, and support for both l
 Chosen for fast development without manually building UI components.
 
 Docker backend uses: node:18-alpine
+
+The frontend includes:
+- API routes under `/app/api`
+- Components for:
+  - Audio upload
+  - Tag filtering
+  - Table history display
+  - Modal/Drawer detailed view
+- A history viewer
+- Global environment variable:
+  `NEXT_PUBLIC_BACKEND_URL` → points to the FastAPI backend
+- Integration with backend endpoints:
+  - `POST /api/analyze`
+  - `GET /api/history`
+  - `GET /api/history/{id}`
+  - `GET /api/retrieve`
+  - `GET /api/retrieve/{id}`
 
 ### Backend
 - FastAPI (Python 3.10 recommended)
@@ -75,7 +92,7 @@ Docker will:
 
 Then open:
 
-http://localhost:3000
+- http://localhost:3000
 
 ---------------------------------------------------------------------
 
@@ -84,27 +101,29 @@ http://localhost:3000
 There is no one-line Docker command for this mode.
 
 ### Start the Frontend
-cd ./front
-npm install
-npm run dev
+- cd ./front
+- npm install
+- npm run dev
 
 
 ### Start the Backend
-cd ./backend
-pip install -r requirements.txt
-uvicorn main:app --port 8000
+- cd ./backend
+- pip install -r requirements.txt
+- uvicorn main:app --port 8000
 
 
 ---------------------------------------------------------------------
 
 ## API Endpoints Overview
 
-| Endpoint               | Method | Description                                    |
-|------------------------|--------|------------------------------------------------|
-| /api/analyze           | POST   | Sends audio and returns LLM analysis           |
-| /api/history           | GET    | Returns processed call history witout details  |
-| /api/retrieve/{id}     | GET    | Retrieves full JSON analysis by ID             |
-| /                      | GET    | Welcome message                                |
+| Endpoint               | Method | Description                                                           |
+|------------------------|--------|-----------------------------------------------------------------------|
+| /api/analyze           | POST   | Sends audio and returns LLM analysis                                  |
+| /api/history           | GET    | Returns processed call history without details                        |
+| /api/history/{id}      | GET    | Returns the full details of a call by ID                              |
+| /api/retrieve/{id}     | GET    | Retrieves full JSON analysis by ID                                    |
+| /api/retrieve          | GET    | Retrieves full JSON analysis (with tags filter and order asc or desc) |
+| /                      | GET    | Welcome message                                                       |
 
 ### Example URLs
 
@@ -131,12 +150,12 @@ http://localhost:8000/api/retrieve/?tags=Demo+Scheduled&order=asc
 ---------------------------------------------------------------------
 
 ## Project Structure
-front/ → Next.js App (HeroUI)
-backend/ → FastAPI + routers + DB
-docker-compose.yml
-ollama_entrypoint.sh
-Modelfile
-.env
+- front/ → Next.js App (HeroUI)
+- backend/ → FastAPI + routers + DB
+- docker-compose.yml
+- ollama_entrypoint.sh
+- Modelfile
+- .env
 
 
 ---------------------------------------------------------------------
