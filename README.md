@@ -79,14 +79,14 @@ This minimizes token cost while preserving accuracy.
 - Clone the main branch of the repository and enter the root folder
 - Create a `.env` file in the project root folder (the base folder that has the docker-compose.yml file) with:
     - OPENAI_API_KEY=""
-- Close ollama if you have a ollama server already running on 11434
+- Close ollama if you have an ollama server already running on 11434
 
 ### Linux or macOS
-Make the entrypoint executable:
+Make the ollama_entrypoint.sh file executable:
 - chmod +x ollama_entrypoint.sh
 
 ### Windows
-Ensure the file uses LF line endings (VSCode → bottom-right → change CRLF to LF).
+Ensure the ollama_entrypoint.sh file uses LF line endings (VSCode → bottom-right → change CRLF to LF).
 
 ### Run everything with Docker
 
