@@ -17,20 +17,17 @@ services:
     
   backend:
       build:
-        context: ./back
-        dockerfile: Dockerfile
+        context: .
+        dockerfile: ./back/Dockerfile
       env_file:
         - .env
       ports:
         - "8000:8000"
       volumes:
-        - ./back:/app
+        - ./back:/app/back
       environment:
         OLLAMA_URL: http://ollama:11434/api/generate
       command: uvicorn main:app --host 0.0.0.0 --port 8000
-      depends_on:
-        ollama:
-          condition: service_healthy
 
   
   ollama:
@@ -42,13 +39,12 @@ services:
       - ./Modelfile:/Modelfile
       - ./ollama_entrypoint.sh:/entrypoint.sh
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
-
     healthcheck:
       test: ["CMD", "ollama", "ps"]
       interval: 20s
       timeout: 5s
       retries: 12
-      start_period: 120s
+      start_period: 60s
     
 volumes:
   ollama_data:

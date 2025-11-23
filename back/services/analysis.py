@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from utils.ollama import ollama_call
+from back.utils.ollama import ollama_call
 import json
 import re
 

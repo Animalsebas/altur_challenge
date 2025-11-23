@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from routers import analyze
-from routers import history
-from routers import retrieve
-from db import initialize_db
+from back.routers import analyze
+from back.routers import history
+from back.routers import retrieve
+from back.db import initialize_db
 
 app = FastAPI()
 

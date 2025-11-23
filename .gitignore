@@ -7,3 +7,4 @@ back/.env
 .env
 back/call_analyzer.db
 back/call_analyzer.db
+/back/tests/__pycache__

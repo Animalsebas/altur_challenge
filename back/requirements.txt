@@ -6,3 +6,6 @@ requests
 openai
 dotenv
 pytz
+pytest
+pytest-asyncio
+httpx

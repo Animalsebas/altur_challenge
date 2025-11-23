@@ -70,6 +70,7 @@ This minimizes token cost while preserving accuracy.
 - Docker Engine installed
 - Create a `.env` file in the project root with:
     - OPENAI_API_KEY=""
+- Close ollama if you have a ollama server already running on 11434
 
 ### Linux or macOS
 Make the entrypoint executable:
@@ -95,6 +96,13 @@ Then go to your browser and open:
 
 - http://localhost:3000
 
+### Run the automated tests
+Identify the name of the current backend container
+- docker compose ps --format "{{.Names}}"
+Replace the name to run the tests
+- docker exec -it <altur_challenge-backend-index> pytest -q
+
+
 ---------------------------------------------------------------------
 
 # 2. Run Without a Local LLM (Remote OpenAI Only)
@@ -108,9 +116,14 @@ There is no one-line Docker command for this mode.
 
 
 ### Start the Backend
+Copy the .env from the root folder into the ./back folder as well
 - cd ./backend
 - pip install -r requirements.txt
 - uvicorn main:app --port 8000
+
+### Run the automated tests without docker
+- cd ./
+- pytest -q
 
 
 ---------------------------------------------------------------------
@@ -147,6 +160,12 @@ http://localhost:8000/api/retrieve?order=desc
 ### Filter by tags and order by Upload time
 http://localhost:8000/api/retrieve/?tags=Demo+Scheduled&order=asc
 
+## Automated tests
+The instructions to run the automated test were described in the How to Run the Project section
+
+### Automated Test 1: Retrieve
+
+### Automated Test 2: Retrieve List
 
 ---------------------------------------------------------------------
 
