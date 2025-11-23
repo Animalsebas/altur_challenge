@@ -43,6 +43,10 @@ The frontend includes:
 
 Docker backend uses: python:3.10-slim
 
+### Database (Persistent Storage)
+- SQLite
+Chosen because it's easy to use, lightweight and doesn't require a server (serverless).
+
 ### Local LLM (Ollama)
 Supports local LLM inference through Ollama using:
 - Gemma 3 (1B) for analysis  
