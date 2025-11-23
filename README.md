@@ -242,6 +242,7 @@ The instructions for running these tests are already described in the **How to R
 
 ## Improvements possible given more time:
 - I would like to include the functionality of adding more than one call simultaneously, and if local analysis is selected, I would create a queue to prevent the models from overloading the system's resources and sequentially insert the results into the database, this would allow the user to continue uploading calls while others are being processed.
+- I would also like to add more automated tests to verify all the functions and processes.
 
 ## Prompt design:
 - I designed the analysis prompts to force the AI to give the output in the most standard way, because I didn't want to spend to much time in reformatting, especially on the tags, so I asked for markdown and json outputs to make the formatting and front-end presentation easier.
