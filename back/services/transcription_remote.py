@@ -21,7 +21,7 @@ def transcribe_file_remote(file_path: str):
                 response_format="json"
             )
         transcription = response.text.strip()
-        language = "UNKNOWN"  # Note: OpenAI does not currently return detected language
+        language = "UNKNOWN"  # INFO: OpenAI does not currently return detected language
 
         return {
             "transcription": transcription,

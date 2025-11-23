@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Upload } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { CallAnalysisLoader } from '@/components/loader';
@@ -109,6 +109,7 @@ export default function App() {
   const [activeFilterTags, setActiveFilterTags] = useState<string[]>([]);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<any | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -120,10 +121,6 @@ export default function App() {
     const id = Date.now() + Math.floor(Math.random() * 1000);
     setToasts((s) => [...s, { id, message, type }]);
     setTimeout(() => setToasts((s) => s.filter((t) => t.id !== id)), duration);
-  };
-
-  const removeToast = (id: number) => {
-    setToasts((s) => s.filter((t) => t.id !== id));
   };
 
   const handleFileSelected = (file: File) => {
@@ -154,7 +151,6 @@ export default function App() {
       }
 
       const data = await response.json();
-      console.log("Data received from API:", data);
       showToast("File transcribed and analyzed successfully!", "success");
       setUploadedFile(null);
       fetchHistory();
@@ -223,16 +219,28 @@ export default function App() {
     }
 
     return rows.slice().sort((a, b) => {
-      const dateA = new Date(a.uploaded_at).getTime();
-      const dateB = new Date(b.uploaded_at).getTime();
+      const timestampA = new Date(a.uploaded_at).getTime();
+      const timestampB = new Date(b.uploaded_at).getTime();
 
       if (sortDirection === "asc") {
-        return dateA - dateB; // Ascending
+        return timestampA - timestampB;
       } else {
-        return dateB - dateA; // Descending
+        return timestampB - timestampA;
       }
     });
   }, [historyRows, activeFilterTags, sortDirection]);
+
+  useEffect(() => {
+    function handleDocClick(e: MouseEvent) {
+      if (!isFilterDropdownOpen) return;
+      const target = e.target as Node | null;
+      if (filterRef.current && target && !filterRef.current.contains(target)) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleDocClick);
+    return () => document.removeEventListener("mousedown", handleDocClick);
+  }, [isFilterDropdownOpen]);
 
   const handleRowClick = async (id: number) => {
     setDetailsLoading(true);
@@ -374,14 +382,12 @@ export default function App() {
       </>
       )}
       
-      
-
       <div className="w-full max-w-4xl mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
           <h2 className="text-2xl font-semibold">History</h2>
 
           <div className="flex items-center gap-4">
-              <div className="relative">
+              <div className="relative" ref={filterRef}>
                   <Button
                       onPress={() => setIsFilterDropdownOpen(prev => !prev)}
                       className="px-3 py-1 rounded-md text-sm whitespace-nowrap border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
@@ -390,7 +396,7 @@ export default function App() {
                   </Button>
                   
                   {isFilterDropdownOpen && (
-                      <div className="absolute z-10 top-full mt-2 right-0 w-64 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl bg-white dark:bg-gray-900 max-h-60 overflow-y-auto">
+                      <div className="absolute z-100 top-full mt-2 right-0 w-64 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl bg-white dark:bg-gray-900 max-h-60 overflow-y-auto">
                           <p className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">Select Tags</p>
                           
                           {allAvailableTags.length > 0 ? (

@@ -14,7 +14,6 @@ def get_db_connection():
 def initialize_db():
     """
     Initializes the SQLite database and creates the 'call_analyses' table.
-    Safe to call multiple times.
     """
     conn = None
     try:

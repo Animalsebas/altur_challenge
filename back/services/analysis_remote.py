@@ -1,11 +1,13 @@
 import os
 import json
 import re
+import logging
 from openai import OpenAI
 from fastapi import HTTPException
 from dotenv import load_dotenv
 
 load_dotenv()
+logger = logging.getLogger("analysis_remote")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -23,7 +25,8 @@ def _chat(prompt: str) -> str:
         )
         return response.choices[0].message.content or ""
     except Exception as e:
-        raise RuntimeError(f"OpenAI request failed: {str(e)}")
+        logger.exception("OpenAI call failed")
+        raise HTTPException(status_code=503, detail=f"OpenAI request failed: {str(e)}")
 
 
 def analyze_transcription_remote(transcription: str):
@@ -60,11 +63,16 @@ def analyze_transcription_remote(transcription: str):
 
     summary_report = _chat(summary_prompt)
 
+    try:
+        summary_report = _chat(summary_prompt)
+    except HTTPException:
+        raise  # propagate
+    except Exception as e:
+        logger.exception("Unexpected error generating summary")
+        raise HTTPException(status_code=500, detail=f"Summary generation failed: {str(e)}")
+
     if not summary_report:
-        return {
-            "summary_report": "Error: Failed to generate summary report.",
-            "tags_list": ["Error: Summary generation failed"]
-        }
+        raise HTTPException(status_code=502, detail="Summary generation returned empty result")
 
     # --- STEP 2: TAGS ---
     print("Remote Step 2: Generating tags...")
@@ -81,17 +89,28 @@ def analyze_transcription_remote(transcription: str):
         f"---{summary_report}---"
     )
 
-    raw = _chat(tags_prompt)
+    try:
+        raw = _chat(tags_prompt)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Unexpected error generating tags")
+        raise HTTPException(status_code=500, detail=f"Tag generation failed: {str(e)}")
+
+
+    match = re.search(r'(\{.*\})', raw, re.DOTALL)
+    if not match:
+        logger.error("Tags response did not contain JSON: %s", raw[:500])
+        raise HTTPException(status_code=502, detail="Tag generation returned non-JSON output")
 
     try:
-        match = re.search(r'(\{.*?\})', raw, re.DOTALL)
-        if not match:
-            tags_list = ["Error: Tag generation failed (no JSON found)"]
-        else:
-            tags_json = json.loads(match.group(1))
-            tags_list = tags_json.get("tags_list", ["Error: Invalid tags_list"])
-    except Exception:
-        tags_list = ["Error: JSON parsing failure"]
+        tags_json = json.loads(match.group(1))
+        tags_list = tags_json.get("tags_list")
+        if not isinstance(tags_list, list) or len(tags_list) == 0:
+            raise ValueError("tags_list missing or invalid")
+    except Exception as e:
+        logger.exception("Failed to parse tags JSON")
+        raise HTTPException(status_code=502, detail=f"Failed to parse tags JSON: {str(e)}")
 
     return {
         "summary_report": summary_report,
