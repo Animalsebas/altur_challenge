@@ -116,6 +116,10 @@ export default function App() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"local" | "remote">("remote");
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [newTagInput, setNewTagInput] = useState("");
+  const [addingTag, setAddingTag] = useState(false);
 
   const removeToast = (id: number) => {
     const t = toastTimeoutsRef.current[id];
@@ -331,6 +335,49 @@ export default function App() {
       console.error(e);
       showToast("Failed to retrieve call.", "error");
     }
+  };
+
+  useEffect(() => {
+    // Syncs editTags with selectedDetails.tags
+    if (isOpen && selectedDetails && Array.isArray(selectedDetails.tags)) {
+      setEditTags(selectedDetails.tags);
+      setIsEditingTags(false);
+      setNewTagInput("");
+      setAddingTag(false);
+    }
+  }, [isOpen, selectedDetails]);
+
+  const updateTags = async (tags: string[]) => {
+    if (!selectedDetails?.id) return;
+    try {
+      const res = await fetch(`/api/updateTags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedDetails.id, tags }),
+      });
+      if (!res.ok) throw new Error("Failed to update tags");
+      showToast("Tags updated!", "success");
+      fetchHistory();
+      setSelectedDetails((prev: any) => prev ? { ...prev, tags } : prev);
+    } catch (e) {
+      showToast("Failed to update tags.", "error");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    const updated = editTags.filter(t => t !== tag);
+    setEditTags(updated);
+    updateTags(updated);
+  };
+
+  const handleAddTag = () => {
+    const tag = newTagInput.trim();
+    if (!tag || tag.length > 20 || editTags.includes(tag)) return;
+    const updated = [...editTags, tag];
+    setEditTags(updated);
+    setNewTagInput("");
+    setAddingTag(false);
+    updateTags(updated);
   };
 
 
@@ -631,15 +678,53 @@ export default function App() {
 
                   <div>
                     <p className="text-sm font-bold">Tags</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {Array.isArray(selectedDetails.tags) && selectedDetails.tags.length > 0 ? (
-                        selectedDetails.tags.map((t: string, i: number) => (
-                          <span key={i} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                    <div className="flex flex-wrap gap-2 mt-2 items-center">
+                      {editTags.length > 0 ? (
+                        editTags.map((t, i) => (
+                          <span
+                            key={i}
+                            className="flex items-center text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-full relative group"
+                          >
                             {t}
+                            <button
+                              className="ml-1 text-xs text-red-500 hover:text-red-700 font-bold px-1 rounded transition-opacity opacity-80 group-hover:opacity-100"
+                              aria-label={`Remove ${t}`}
+                              onClick={() => handleRemoveTag(t)}
+                              tabIndex={0}
+                              type="button"
+                            >
+                              ×
+                            </button>
                           </span>
                         ))
                       ) : (
                         <span className="text-sm text-gray-400">—</span>
+                      )}
+                      <button
+                        className="ml-2 text-blue-600 bg-blue-100 hover:bg-blue-200 rounded-full px-2 py-1 font-bold text-lg flex items-center"
+                        onClick={() => setAddingTag(true)}
+                        type="button"
+                        aria-label="Add tag"
+                      >
+                        +
+                      </button>
+                      {addingTag && (
+                        <input
+                          type="text"
+                          maxLength={20}
+                          value={newTagInput}
+                          autoFocus
+                          onChange={e => setNewTagInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") handleAddTag();
+                            if (e.key === "Escape") {
+                              setAddingTag(false);
+                              setNewTagInput("");
+                            }
+                          }}
+                          className="ml-2 px-2 py-1 border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
+                          placeholder="New tag (max. 20 chars)"
+                        />
                       )}
                     </div>
                   </div>

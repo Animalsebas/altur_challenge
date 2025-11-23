@@ -9,7 +9,7 @@ It combines a modern Next.js frontend, a FastAPI backend, and support for both l
 
 ### Frontend
 - Next.js 14 (App Router)
-- HeroUI  
+- HeroUI and Tailwind CSS
 Chosen for fast development without manually building UI components.
 
 Docker backend uses: node:18-alpine
@@ -21,7 +21,10 @@ The frontend includes:
   - Tag filtering
   - Table history display
   - Modal/Drawer detailed view
-- A history viewer
+- A history viewer of all previous analyses with options to filter by tag and order by upload timestamp
+- A modal that shows the details of an analysis: File metadata, upload timestamp, language of the call, where it was processed (local or with OpenAI API), tags, summary and key information, full transcript and information on the processing time.
+- Inside the details modal it is possible to remove tags by clicking the "x" on the side, it is also possible to add a new tag by clicking the "+" button, writing the new tag name and pressing the "Enter" key. There is no need to use a save button since every change is updated in the database automatically.
+- There are download buttons on both the history table and the details modal. In the history table the download option will execute the process for the download of all the analyses details that are currently shown in the table (using the current tag filters and order) in JSON format. The download option on the details modal will download the analysis details of the selected call in JSON format.
 - Global environment variable:
   `NEXT_PUBLIC_BACKEND_URL` → points to the FastAPI backend
 - Integration with backend endpoints:
@@ -30,11 +33,12 @@ The frontend includes:
   - `GET /api/history/{id}`
   - `GET /api/retrieve`
   - `GET /api/retrieve/{id}`
+  - `POST /api/updateTags`
 - Simple and Intuitive UI with light and dark modes.
 
 ### Backend
 - FastAPI (Python 3.10 recommended)
-- Router modules for analyze, history, and retrieve
+- Router modules for analyzing calls, request analysis history, retrieve and download analyses and updating tags (user override)
 - Automatic database initialization on startup
 
 Docker backend uses: python:3.10-slim
@@ -125,10 +129,10 @@ There is no one-line Docker command for this mode.
 
 
 ### Start the Backend
-Copy the .env from the root folder into the ./back folder as well
-- cd ./backend
-- pip install -r requirements.txt
-- uvicorn main:app --port 8000
+- cd ./
+- pip install -r ./backend/requirements.txt
+- uvicorn back.main:app --reload
+If the backend has trouble finding the .env on the root folder copy it into the ./back folder.
 
 ### Run the automated tests without docker
 - cd ./
@@ -146,6 +150,7 @@ Copy the .env from the root folder into the ./back folder as well
 | /api/history/{id}      | GET    | Returns the full details of a call by ID                              |
 | /api/retrieve/{id}     | GET    | Retrieves full JSON analysis by ID                                    |
 | /api/retrieve          | GET    | Retrieves full JSON analysis (with tags filter and order asc or desc) |
+| /api/updateTags        | POST   | Sends ID and Tags list and updates it in the DB                       |
 | /                      | GET    | Welcome message                                                       |
 
 ### Example URLs
