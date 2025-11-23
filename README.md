@@ -73,7 +73,7 @@ This minimizes token cost while preserving accuracy.
 ### Requirements
 - Docker Engine installed
 - Clone the main branch of the repository and enter the root folder
-- Create a `.env` file in the project root with:
+- Create a `.env` file in the project root folder (the base folder that has the docker-compose.yml file) with:
     - OPENAI_API_KEY=""
 - Close ollama if you have a ollama server already running on 11434
 
