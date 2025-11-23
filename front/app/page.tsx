@@ -100,6 +100,7 @@ const DragAndDropFileUploader: React.FC<DragAndDropFileUploaderProps> = ({ onFil
 
 export default function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastTimeoutsRef = useRef<Record<number, number>>({});
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [historyRows, setHistoryRows] = useState<
@@ -116,12 +117,31 @@ export default function App() {
   const [analysisMode, setAnalysisMode] = useState<"local" | "remote">("remote");
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
 
+  const removeToast = (id: number) => {
+    const t = toastTimeoutsRef.current[id];
+    if (t) {
+      clearTimeout(t);
+      delete toastTimeoutsRef.current[id];
+    }
+    setToasts((s) => s.filter((t) => t.id !== id));
+  };
 
   const showToast = (message: string, type: Toast["type"] = "info", duration = 4000) => {
     const id = Date.now() + Math.floor(Math.random() * 1000);
     setToasts((s) => [...s, { id, message, type }]);
-    setTimeout(() => setToasts((s) => s.filter((t) => t.id !== id)), duration);
+    const tid = window.setTimeout(() => {
+      setToasts((s) => s.filter((t) => t.id !== id));
+      delete toastTimeoutsRef.current[id];
+    }, duration);
+    toastTimeoutsRef.current[id] = tid;
   };
+
+  useEffect(() => {
+    return () => {
+      Object.values(toastTimeoutsRef.current).forEach(clearTimeout);
+      toastTimeoutsRef.current = {};
+    };
+  }, []);
 
   const handleFileSelected = (file: File) => {
     setUploadedFile(file);
@@ -151,13 +171,13 @@ export default function App() {
       }
 
       const data = await response.json();
-      showToast("File transcribed and analyzed successfully!", "success");
+      showToast("Call transcribed and analyzed successfully!", "success");
       setUploadedFile(null);
       fetchHistory();
       handleRowClick(data.id);
     } catch (error) {
-      console.error("Error during transcription:", error);
-      showToast("An error occurred while transcribing the file.", "error");
+      console.error("Error during analysis:", error);
+      showToast("An error occurred while analyzing the call.", "error");
     } finally {
       setIsAnalyzing(false);
     }
@@ -330,10 +350,10 @@ export default function App() {
       {uploadedFile && (
         <>
           <div className="mt-4 p-4 border border-green-400 bg-green-50 rounded-lg text-green-800">
-            <p className="font-semibold text-center">File {uploadedFile.name} is ready for analysis</p>
+            <p className="font-semibold text-center">Call {uploadedFile.name} is ready for analysis</p>
             <p className="text-center text-xl mt-2">Select a processing option</p>
 
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex items-center justify-center gap-3">
 
               <label
                 className={`flex items-center gap-2 px-3 py-1 rounded-md cursor-pointer transition ${
@@ -348,7 +368,7 @@ export default function App() {
                   onChange={() => setAnalysisMode("remote")}
                   className="hidden"
                 />
-                <span className="text-lg font-medium">OpenAI (remote)</span>
+                <span className="text-lg font-medium">OpenAI (API)</span>
               </label>
 
               <label
@@ -364,7 +384,7 @@ export default function App() {
                   onChange={() => setAnalysisMode("local")}
                   className="hidden"
                 />
-                <span className="text-lg font-medium">Local (server)</span>
+                <span className="text-lg font-medium">Local</span>
               </label>
 
             </div>
@@ -543,6 +563,31 @@ export default function App() {
             </table>
           </div>
         </div>
+      </div>
+
+      <div className="fixed right-4 bottom-6 z-50 flex flex-col gap-3 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`pointer-events-auto max-w-sm w-full px-4 py-2 rounded-lg shadow-lg border ${
+              t.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : t.type === "error"
+                ? "bg-red-50 border-red-200 text-red-800"
+                : "bg-blue-50 border-blue-200 text-blue-800"
+            } flex items-start justify-between gap-3`}
+            role="status"
+          >
+            <div className="text-sm">{t.message}</div>
+            <button
+              onClick={() => removeToast(t.id)}
+              className="text-xs text-gray-500 hover:text-gray-700 ml-3"
+              aria-label="dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
       </div>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl">
