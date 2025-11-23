@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from routers import analyze
 from routers import history
 from routers import retrieve
@@ -6,6 +8,19 @@ from routers import update_tags
 from db import initialize_db
 
 app = FastAPI()
+
+origins = [
+    "https://altur-frontend.fly.dev", 
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
 app.include_router(history.router, prefix="/api", tags=["history"])
