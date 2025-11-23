@@ -82,7 +82,8 @@ This minimizes token cost while preserving accuracy.
 - Close ollama if you have an ollama server already running on 11434
 
 ### Linux or macOS
-Make the ollama_entrypoint.sh file executable:
+Make the ollama_entrypoint.sh file in the base folder  executable:
+- cd ./
 - chmod +x ollama_entrypoint.sh
 
 ### Windows
