@@ -9,6 +9,10 @@ primary_region = 'dfw'
 [build]
   dockerfile = 'Dockerfile'
 
+[mounts]
+  source="altur_data"
+  destination="/data"
+
 [env]
   PORT = "8000"
 
