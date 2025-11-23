@@ -430,6 +430,7 @@ export default function App() {
                   checked={analysisMode === "local"}
                   onChange={() => setAnalysisMode("local")}
                   className="hidden"
+                  disabled={true}
                 />
                 <span className="text-lg font-medium">Local</span>
               </label>

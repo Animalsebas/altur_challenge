@@ -1,12 +1,12 @@
 from fastapi import APIRouter, UploadFile, HTTPException, File, Form
 
-from back.services.transcription import transcribe_file
-from back.services.transcription_remote import transcribe_file_remote
+from services.transcription import transcribe_file
+from services.transcription_remote import transcribe_file_remote
 
-from back.services.analysis import analyze_transcription
-from back.services.analysis_remote import analyze_transcription_remote
+from services.analysis import analyze_transcription
+from services.analysis_remote import analyze_transcription_remote
 
-from back.db import get_db_connection
+from db import get_db_connection
 from datetime import datetime, timezone
 import pytz
 import json

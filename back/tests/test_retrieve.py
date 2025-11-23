@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
-from back.main import app
-from back.db import get_db_connection, initialize_db, DB_NAME
+from main import app
+from db import get_db_connection, initialize_db, DB_NAME
 import json
 import os
 

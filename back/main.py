@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from back.routers import analyze
-from back.routers import history
-from back.routers import retrieve
-from back.routers import update_tags
-from back.db import initialize_db
+from routers import analyze
+from routers import history
+from routers import retrieve
+from routers import update_tags
+from db import initialize_db
 
 app = FastAPI()
 
