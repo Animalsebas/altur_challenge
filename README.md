@@ -122,9 +122,22 @@ Identify the name of the current backend container
 
 ---------------------------------------------------------------------
 
-## 2. Run Without a Local LLM (Remote OpenAI Only)
 
-There is no one-line Docker command for this mode.
+## 2. Access to live preview in fly.io (only remote OpenAI API available)
+https://altur-sales-call-analyzer.fly.dev/
+
+### Backend URL 
+https://altur-backend.fly.dev/
+
+
+---------------------------------------------------------------------
+
+
+## 3. Run modules separately for development
+
+There is no one-line Docker command for this mode. For running the front end and back end modules this way you must have NodeJS and Python installed in your system.
+- https://www.python.org
+- https://nodejs.org/en
 
 ### Start the Frontend
 - cd ./front
@@ -138,18 +151,14 @@ There is no one-line Docker command for this mode.
 - uvicorn back.main:app --reload
 If the backend has trouble finding the .env on the root folder copy it into the ./back folder.
 
+### Ollama
+If you want to also test the local analysis separately install ollama and gemma3:1B in your system.
+- https://ollama.com/
+
 ### Run the automated tests without docker
 - cd ./
 - pytest -q
 
----------------------------------------------------------------------
-
-
-## 3. Access to live preview in fly.io (only remote OpenAI API available)
-https://altur-sales-call-analyzer.fly.dev/
-
-### Backend URL 
-https://altur-backend.fly.dev/
 
 ---------------------------------------------------------------------
 
