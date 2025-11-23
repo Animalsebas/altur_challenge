@@ -22,7 +22,7 @@ export const CallAnalysisLoader = () => {
         Analyzing call...
       </p>
       <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 opacity-0 animate-fade-in delay-1000">
-        This takes only a moment.
+        This will take a moment.
       </p>
 
     </div>

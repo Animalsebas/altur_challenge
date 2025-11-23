@@ -62,12 +62,13 @@ This minimizes token cost while preserving accuracy.
 
 ---------------------------------------------------------------------
 
-## How to Run the Project
+# How to Run the Project
 
-# 1. Run With Local LLM
+## 1. Run With Local LLM
 
 ### Requirements
 - Docker Engine installed
+- Clone the repository and enter the root folder
 - Create a `.env` file in the project root with:
     - OPENAI_API_KEY=""
 - Close ollama if you have a ollama server already running on 11434
@@ -92,6 +93,14 @@ Docker will:
 - Start the Ollama server  
 - Download the Gemma3:1b model  
 
+You will likely see output such as:
+- ollama-1    | pulling manifest ⠧
+- gathering model components
+- ollama-1    | pulling 7cd4618c1faf 100% ▕███████████████████▏ 815 MB
+
+Wait for the following line in order for the local analysis to be available
+- ollama-1    | Model ready. Continuing.
+
 Then go to your browser and open:
 
 - http://localhost:3000
@@ -105,7 +114,7 @@ Replace the name to run the tests
 
 ---------------------------------------------------------------------
 
-# 2. Run Without a Local LLM (Remote OpenAI Only)
+## 2. Run Without a Local LLM (Remote OpenAI Only)
 
 There is no one-line Docker command for this mode.
 
@@ -160,13 +169,18 @@ http://localhost:8000/api/retrieve?order=desc
 ### Filter by tags and order by Upload time
 http://localhost:8000/api/retrieve/?tags=Demo+Scheduled&order=asc
 
-## Automated tests
-The instructions to run the automated test were described in the How to Run the Project section
+## Automated Tests
 
-### Automated Test 1: Retrieve
+The project includes two automated tests that verify the functionality of the `/api/retrieve` endpoints.  
+The instructions for running these tests are already described in the **How to Run the Project** section, where you run:
 
-### Automated Test 2: Retrieve List
+- docker exec -it altur_challenge-backend-1 pytest -q
 
+### Automated Test 1: Retrieve (Single Record)
+- This test validates that the /api/retrieve/{id} endpoint correctly retrieves a single record from the database.
+
+### Automated Test 2: Retrieve List (Ordered Results)
+- This test verifies that the /api/retrieve endpoint can return an ordered list of records.
 ---------------------------------------------------------------------
 
 ## Project Structure
