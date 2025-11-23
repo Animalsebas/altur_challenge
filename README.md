@@ -30,6 +30,7 @@ The frontend includes:
   - `GET /api/history/{id}`
   - `GET /api/retrieve`
   - `GET /api/retrieve/{id}`
+- Simple and Intuitive UI with light and dark modes.
 
 ### Backend
 - FastAPI (Python 3.10 recommended)
@@ -90,7 +91,7 @@ Docker will:
 - Start the Ollama server  
 - Download the Gemma3:1b model  
 
-Then open:
+Then go to your browser and open:
 
 - http://localhost:3000
 
@@ -165,4 +166,21 @@ http://localhost:8000/api/retrieve/?tags=Demo+Scheduled&order=asc
 - Fully supports local-only inference (no internet required)
 - Demonstrates privacy-friendly, on-device AI with small models
 - Supports remote OpenAI workflows for higher accuracy
-- Architecture is optimized for lightweight deployment and testing
+- Architecture is optimized for lightweight deployment and testing on systems with low resources.
+
+## Assumptions made:
+- I assumed that the web app should only allow one call analysis at a time per user.
+- I assumed file re-encoding wouldn't be needed since the user already had their calls in either MP3 or WAV format.
+
+## Architecture/Design Decisions:
+- I used NextJS since it is the framework I have the most experience with, and I used HeroUI components to save time on the front end design.
+- I implemented "proxy" API routes in the Nextjs App to the FastAPI endpoint to avoid the Access-Control-Allow-Origin error.
+- I used FastAPI since I have more experience with Python and that framework 
+- For the local analysis, the tiny version of the OpenAI Whisper model was selected for its speed and low system requirements. The same consideration was made for the Gemma 3 1B model. The purpose is only to show that local processing is possible even with low system resources and no GPU. With a GPU and more RAM, it would be possible to use the same models that the OpenAI API has available locally.
+
+## Improvements possible given more time:
+- I would like to include the functionality of adding more than one call simultaneously, and if local analysis is selected, I would create a queue to prevent the models from overloading the system's resources and sequentially insert the results into the database, this would allow the user to continue uploading calls while others are being processed.
+
+## Prompt design:
+- I designed the analysis prompts to force the AI to give the output in the most standard way, because I didn't want to spend to much time in reformatting, especially on the tags, so I asked for markdown and json outputs to make the formatting and front-end presentation easier.
+- I also gave guidance and examples on the prompts to align the analysis to the required output.
