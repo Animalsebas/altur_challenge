@@ -112,7 +112,7 @@ Then go to your browser and open:
 ### Run the automated tests
 Identify the name of the current backend container
 - docker compose ps --format "{{.Names}}"
-Replace the name to run the tests
+- Replace the name of the backend container obtained with the command above on the command below to run the tests
 - docker exec -it <altur_challenge-backend-index> pytest -q
 
 
