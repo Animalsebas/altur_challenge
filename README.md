@@ -72,7 +72,7 @@ This minimizes token cost while preserving accuracy.
 
 ### Requirements
 - Docker Engine installed
-- Clone the repository and enter the root folder
+- Clone the main branch of the repository and enter the root folder
 - Create a `.env` file in the project root with:
     - OPENAI_API_KEY=""
 - Close ollama if you have a ollama server already running on 11434
@@ -138,6 +138,14 @@ If the backend has trouble finding the .env on the root folder copy it into the 
 - cd ./
 - pytest -q
 
+---------------------------------------------------------------------
+
+
+## 3. Access to live preview in fly.io (only remote OpenAI API available)
+https://altur-sales-call-analyzer.fly.dev/
+
+### Backend URL 
+https://altur-backend.fly.dev/
 
 ---------------------------------------------------------------------
 
@@ -160,6 +168,8 @@ http://localhost:8000/api/history
 http://localhost:8000/api/retrieve/1
 
 http://localhost:8000/api/retrieve/123
+
+https://altur-backend.fly.dev/api/retrieve/1
 
 
 ### Filter by tags
